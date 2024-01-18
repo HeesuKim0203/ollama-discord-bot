@@ -3,7 +3,6 @@ package app
 import (
 	"fmt"
 	"log"
-	"os/exec"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -29,30 +28,8 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			text += v
 		}
 
-		log.Println(text)
+		go AiRequest(s, m, c.GetAiUrl(), text)
 
-		args := []string{
-			"-X", "POST",
-			"http://localhost:11434/api/generate",
-			"-d", fmt.Sprintf(`{
-				"model":"mistral",
-				"prompt":"%s"
-			}`, text),
-		}
-
-		response := exec.Command("curl", args...)
-
-		log.Println(response)
-
-		result, err := response.Output()
-		if err != nil {
-			log.Println("RunStart Error:", err)
-			return
-		}
-
-		log.Println(string(result))
-
-		return
 	}
 
 }
