@@ -10,6 +10,7 @@ import (
 type Config struct {
 	discordToken string
 	botName      string
+	aiUrl        string
 }
 
 var c *Config
@@ -45,7 +46,15 @@ func envFile(env map[string]string) {
 	} else {
 		fmt.Println("Not found in .env file the 'BOT_NAME'!")
 		fmt.Println("Use the default for 'BOT_NAME'.")
-		c.botName = "!music"
+		c.botName = "!chat"
+	}
+
+	aiUrl := env["AI_URL"]
+
+	if botName != "" {
+		c.aiUrl = aiUrl
+	} else {
+		panic("Not found the 'AI_URL'!")
 	}
 
 	fmt.Println("Config complete!")
@@ -70,7 +79,15 @@ func specifiedEnv() {
 	} else {
 		fmt.Println("Not found the 'BOT_NAME'!")
 		fmt.Println("Use the default for 'BOT_NAME'.")
-		c.botName = "!music"
+		c.botName = "!chat"
+	}
+
+	aiUrl := os.Getenv("AI_URL")
+
+	if botName != "" {
+		c.aiUrl = aiUrl
+	} else {
+		panic("Not found the 'AI_URL'!")
 	}
 
 	fmt.Println("Config complete!")
@@ -82,6 +99,10 @@ func (c *Config) GetDiscordToken() string {
 
 func (c *Config) GetBotName() string {
 	return c.botName
+}
+
+func (c *Config) GetAiUrl() string {
+	return c.aiUrl
 }
 
 func GetConfig() *Config {
