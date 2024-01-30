@@ -2,11 +2,10 @@ package app
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
-	"io"
+	"fmt"
 	"log"
-	"net/http"
+	"os/exec"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/discordgo-ai-bot/util"
@@ -18,34 +17,58 @@ func AiRequest(s *discordgo.Session, m *discordgo.MessageCreate, aiUrl string, m
 		s.ChannelMessageSend(m.ChannelID, "Empty string. Please enter a question")
 	}
 
-	requestData := util.NewRequst(question, modelName)
-
-	jsonData, err := json.Marshal(requestData)
-	if err != nil {
-		log.Fatalf("Error marshalling request data: %v", err)
+	// Todo : "" -> err
+	args := []string{
+		"-X", "POST",
+		aiUrl,
+		"-d", fmt.Sprintf(`{
+			"model":"mistral",
+			"prompt":"%s"
+		}`, question),
 	}
 
-	response, err := http.Post(aiUrl, "application/json", bytes.NewBuffer(jsonData))
+	cmd := exec.Command("curl", args...)
+
+	stdOut, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatalf("Error making POST request: %v", err)
+		fmt.Println("Error creating StdoutPipe for Cmd", err)
+		aiErr(s, m)
+		return
 	}
-	defer response.Body.Close()
 
-	reader := bufio.NewReader(response.Body)
-	var responseChunks []string
+	err = cmd.Start()
+	if err != nil {
+		fmt.Println("Error starting Cmd", err)
+		aiErr(s, m)
+		return
+	}
 
-	for {
-		line, err := reader.ReadString('\n')
-		if err == io.EOF {
-			break // 파일의 끝에 도달함
-		}
+	reader := bufio.NewReader(stdOut)
+	line, err := reader.ReadString('\n')
+
+	var response *util.Response
+
+	result := ""
+
+	for err == nil {
+		err = json.Unmarshal([]byte(line), &response)
 		if err != nil {
-			log.Fatalf("Error reading chunk: %v", err)
+			log.Println(err)
+			aiErr(s, m)
+		} else {
+			result += response.Data
 		}
-		responseChunks = append(responseChunks, line)
+		line, err = reader.ReadString('\n')
 	}
 
-	log.Println(responseChunks)
+	err = cmd.Wait()
+	if err != nil {
+		fmt.Println("Error waiting for Cmd", err)
+		aiErr(s, m)
+		return
+	}
+
+	s.ChannelMessageSend(m.ChannelID, result)
 }
 
 func aiErr(s *discordgo.Session, m *discordgo.MessageCreate) {
