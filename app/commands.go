@@ -11,7 +11,11 @@ import (
 	"github.com/discordgo-ai-bot/util"
 )
 
-func AiRequest(s *discordgo.Session, m *discordgo.MessageCreate, aiUrl string, text string) {
+func AiRequest(s *discordgo.Session, m *discordgo.MessageCreate, aiUrl string, modelName string, question string) {
+
+	if question == "" {
+		s.ChannelMessageSend(m.ChannelID, "Empty string. Please enter a question")
+	}
 
 	// Todo : "" -> err
 	args := []string{
@@ -20,7 +24,7 @@ func AiRequest(s *discordgo.Session, m *discordgo.MessageCreate, aiUrl string, t
 		"-d", fmt.Sprintf(`{
 			"model":"mistral",
 			"prompt":"%s"
-		}`, text),
+		}`, question),
 	}
 
 	cmd := exec.Command("curl", args...)

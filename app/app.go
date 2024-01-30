@@ -28,7 +28,7 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			text += v
 		}
 
-		go AiRequest(s, m, c.GetAiUrl(), text)
+		go AiRequest(s, m, c.GetAiUrl(), c.GetModelName(), text)
 
 	}
 
