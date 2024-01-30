@@ -2,69 +2,50 @@ package app
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
-	"fmt"
+	"io"
 	"log"
-	"os/exec"
+	"net/http"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/discordgo-ai-bot/util"
 )
 
-func AiRequest(s *discordgo.Session, m *discordgo.MessageCreate, aiUrl string, text string) {
+func AiRequest(s *discordgo.Session, m *discordgo.MessageCreate, aiUrl string, modelName string, question string) {
 
-	// Todo : "" -> err
-	args := []string{
-		"-X", "POST",
-		aiUrl,
-		"-d", fmt.Sprintf(`{
-			"model":"mistral",
-			"prompt":"%s"
-		}`, text),
+	if question == "" {
+		s.ChannelMessageSend(m.ChannelID, "Empty string. Please enter a question")
 	}
 
-	cmd := exec.Command("curl", args...)
+	requestData := util.NewRequst(question, modelName)
 
-	stdOut, err := cmd.StdoutPipe()
+	jsonData, err := json.Marshal(requestData)
 	if err != nil {
-		fmt.Println("Error creating StdoutPipe for Cmd", err)
-		aiErr(s, m)
-		return
+		log.Fatalf("Error marshalling request data: %v", err)
 	}
 
-	err = cmd.Start()
+	response, err := http.Post(aiUrl, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		fmt.Println("Error starting Cmd", err)
-		aiErr(s, m)
-		return
+		log.Fatalf("Error making POST request: %v", err)
 	}
+	defer response.Body.Close()
 
-	reader := bufio.NewReader(stdOut)
-	line, err := reader.ReadString('\n')
+	reader := bufio.NewReader(response.Body)
+	var responseChunks []string
 
-	var response *util.Response
-
-	result := ""
-
-	for err == nil {
-		err = json.Unmarshal([]byte(line), &response)
-		if err != nil {
-			log.Println(err)
-			aiErr(s, m)
-		} else {
-			result += response.Data
+	for {
+		line, err := reader.ReadString('\n')
+		if err == io.EOF {
+			break // 파일의 끝에 도달함
 		}
-		line, err = reader.ReadString('\n')
+		if err != nil {
+			log.Fatalf("Error reading chunk: %v", err)
+		}
+		responseChunks = append(responseChunks, line)
 	}
 
-	err = cmd.Wait()
-	if err != nil {
-		fmt.Println("Error waiting for Cmd", err)
-		aiErr(s, m)
-		return
-	}
-
-	s.ChannelMessageSend(m.ChannelID, result)
+	log.Println(responseChunks)
 }
 
 func aiErr(s *discordgo.Session, m *discordgo.MessageCreate) {
