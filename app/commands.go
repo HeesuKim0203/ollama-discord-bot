@@ -22,9 +22,9 @@ func AiRequest(s *discordgo.Session, m *discordgo.MessageCreate, aiUrl string, m
 		"-X", "POST",
 		aiUrl,
 		"-d", fmt.Sprintf(`{
-			"model":"mistral",
+			"model":"%s",
 			"prompt":"%s"
-		}`, question),
+		}`, c.GetModelName(), question),
 	}
 
 	cmd := exec.Command("curl", args...)
