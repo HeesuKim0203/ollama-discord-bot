@@ -13,7 +13,7 @@ Do not include this value in a public repository.
 |:---|:---|:---:|:---:|
 |DISCORD_PUBLIC_KEY|Please look at the [discord bot guide](https://discord.com/developers/docs/getting-started#step-1-creating-an-app) and create a token and put it in.|string|X|
 |AI_URL|Accesses an AI server running locally and receives JSON formatted data through this address.|string|X|
-|MODEL_NAME|mistral|string|X|
+|MODEL_NAME|Please specify the name of the model you want to run and receive output from in Ollama! Example: mistral|string|X|
 |BOT_NAME|Indicates the name of the bot and the first command.(Case insensitive)|string|"!chat"|
 
 ## Command
