@@ -8,6 +8,7 @@ FROM alpine:3.16
 ENV DISCORD_PUBLIC_KEY=""
 ENV AI_URL=""
 ENV BOT_NAME=""
+ENV MODEL_NAME=""
 ENV APP_HOME=/app
 WORKDIR ${APP_HOME}
 RUN apk --update add --no-cache ca-certificates curl
