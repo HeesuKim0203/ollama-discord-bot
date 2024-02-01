@@ -11,6 +11,8 @@ ENV BOT_NAME=""
 ENV MODEL_NAME=""
 ENV APP_HOME=/app
 WORKDIR ${APP_HOME}
-RUN apk --update add --no-cache ca-certificates curl
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/bin/ollama-discord-bot ./bin/ollama-discord-bot
 ENTRYPOINT ["/app/bin/ollama-discord-bot"]
